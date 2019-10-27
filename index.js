@@ -58,9 +58,10 @@ async function run() {
 	}
 	console.log(urls);
     for(i = 0; i < urls.length; i++) {
-		await page.goto(urls[i]);
-        await page.waitForSelector('iframe');
-        const iframe = await page.mainFrame().childFrames()[0];
+        const localPage = await browser.newPage();
+		await localPage.goto(urls[i]);
+        await localPage.waitForSelector('iframe');
+        const iframe = await localPage.mainFrame().childFrames()[0];
         // waits for content inside of the row to appear
         const sel = '#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(1)';
         await iframe.waitForSelector(sel);
