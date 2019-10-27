@@ -44,9 +44,15 @@ async function run() {
     await page.waitFor(1000);
     const table = await iframe.$$('tr');
 
-    table.forEach((row, idx) => {
-        console.log(row.toString());
-    });
+    let links = []
+    for(i = 0; i < table.length; i++) {
+        const link = await table[i].$('a');
+        if(link) {
+            links.push(link);
+        }
+        //console.log(await table[i].$eval('a', link => link.innerText));
+    }
+    console.log(urls);
     //await page.waitForSelector('#sort-pages', { visible: true, timeout: 0 });   
     await page.screenshot({ path: 'screenshots/github.png' });
 
