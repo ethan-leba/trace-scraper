@@ -25,12 +25,28 @@ async function run() {
     await page.click(BUTTON_SELECTOR);
 
     await page.waitForNavigation();
+
+    // get on to the trace website
     await page.waitForSelector('#portlet_com_neu_events_display_portlet_EventsDisplayPortlet_INSTANCE_BL8mcIrWtJXq > div > div > div > div > div.container-header.mobile-collapse > a');
 
     await page.goto('https://www.applyweb.com/eval/shibboleth/neu/36892');
     await page.waitForSelector('#navbar > ul > li:nth-child(3) > a');
     await page.goto('https://www.applyweb.com/eval/new/reportbrowser');
-    await page.waitFor(30000);
+
+    // we can now scrape
+    
+    // pull out the table from the page
+    await page.waitForSelector('iframe');
+ //   await page.waitFor(10 * 1000);
+    const iframe = await page.mainFrame().childFrames()[0];
+    // waits for content inside of the row to appear
+    await iframe.waitForSelector('td.ng-binding');
+    await page.waitFor(1000);
+    const table = await iframe.$$('tr');
+
+    table.forEach((row, idx) => {
+        console.log(row.toString());
+    });
     //await page.waitForSelector('#sort-pages', { visible: true, timeout: 0 });   
     await page.screenshot({ path: 'screenshots/github.png' });
 
