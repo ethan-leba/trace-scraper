@@ -13,13 +13,13 @@ async function run() {
   });
   const page = await browser.newPage();
 
-  await page.goto("http://my.northeastern.edu/c/portal/login");
-  await page.waitFor(1000);
+  console.log("Opening portal to myNEU...");
 
-  // logins
-  // login selectors
+  await page.goto("http://my.northeastern.edu/c/portal/login");
+  await page.waitForSelector(selectors.login.button);
+
   console.log("Logging into myNEU...");
-  // login logic
+
   await page.click(selectors.login.username);
   await page.keyboard.type(process.env.myNEU_username);
 
@@ -30,7 +30,6 @@ async function run() {
 
   await page.waitForNavigation();
 
-  // get on to the trace website
   await page.waitForSelector(selectors.login.mainpage_indicator);
 
   console.log("Launching TRACE website...");
@@ -38,15 +37,31 @@ async function run() {
   await page.waitForSelector(selectors.login.trace_indicator);
   await page.goto("https://www.applyweb.com/eval/new/reportbrowser");
 
-  // we can now scrape
-
   console.log("Collecting links on page 1");
   // pull out the table from the page
-  await page.waitForSelector("iframe");
-  const iframe = page.mainFrame().childFrames()[0];
+
+  let queue = async.queue(async (url, callback) => {
+    await page_handler.scrape(browser, url);
+    callback();
+  }, 5);
+
+  (await getURLS(browser, page.url())).forEach(url => queue.push(url));
+
+  await queue.drain();
+  //  await async.parallel(urls.map(url => callback => scrapePage(browser, url)));
+
+  await page.close();
+  await browser.close();
+}
+
+async function getURLS(browser, url) {
+  const localPage = await browser.newPage();
+  await localPage.goto(url);
+  await localPage.waitForSelector("iframe");
+  const iframe = localPage.mainFrame().childFrames()[0];
   // waits for content inside of the row to appear
   await iframe.waitForSelector("td.ng-binding");
-  await page.waitFor(1000);
+  await localPage.waitFor(1000);
   const table = await iframe.$$("tbody tr");
 
   let urls = [];
@@ -57,18 +72,8 @@ async function run() {
     }
   }
 
-  let queue = async.queue(async (url, callback) => {
-    await page_handler.scrape(browser, url);
-    callback();
-  }, 5);
-
-  urls.forEach(url => queue.push(url));
-
-  await queue.drain();
-  //  await async.parallel(urls.map(url => callback => scrapePage(browser, url)));
-
-  await page.close();
-  await browser.close();
+  await localPage.close();
+  return urls;
 }
 
 run();

@@ -10,13 +10,13 @@ module.exports = {
     let data = {};
 
     for (var attr in selectors.trace) {
+      // unsure if this is necessary
+      await iframe.waitForSelector(selectors.trace[attr]);
       data[attr] = await iframe.evaluate(
         element => element.textContent,
         await iframe.$(selectors.trace[attr])
       );
     }
-
-    console.log(data);
     await localPage.close();
   }
 };
