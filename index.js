@@ -1,4 +1,5 @@
 const puppeteer = require("puppeteer");
+require("dotenv").config();
 const { Cluster } = require("puppeteer-cluster");
 const async = require("async");
 
@@ -23,10 +24,10 @@ async function run() {
   console.log("Logging into myNEU...");
   // login logic
   await page.click(USERNAME_SELECTOR);
-  await page.keyboard.type(CREDS.username);
+  await page.keyboard.type(process.env.myNEU_username);
 
   await page.click(PASSWORD_SELECTOR);
-  await page.keyboard.type(CREDS.password);
+  await page.keyboard.type(process.env.myNEU_password);
 
   await page.click(BUTTON_SELECTOR);
 
@@ -47,7 +48,7 @@ async function run() {
   console.log("Collecting links on page 1");
   // pull out the table from the page
   await page.waitForSelector("iframe");
-  const iframe = await page.mainFrame().childFrames()[0];
+  const iframe = page.mainFrame().childFrames()[0];
   // waits for content inside of the row to appear
   await iframe.waitForSelector("td.ng-binding");
   await page.waitFor(1000);
