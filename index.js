@@ -4,7 +4,6 @@ const { Cluster } = require("puppeteer-cluster");
 const async = require("async");
 const page_handler = require("./page_handler");
 const fs = require("fs");
-
 const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 
 async function run() {

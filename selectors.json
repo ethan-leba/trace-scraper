@@ -5,5 +5,11 @@
     "button": "body > section > div > div:nth-child(1) > div > form > div:nth-child(3) > button",
     "mainpage_indicator": "#portlet_com_neu_events_display_portlet_EventsDisplayPortlet_INSTANCE_BL8mcIrWtJXq > div > div > div > div > div.container-header.mobile-collapse > a",
     "trace_indicator": "#navbar > ul > li:nth-child(3) > a"
+  },
+  "trace": {
+    "instructor": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(1) > strong",
+    "course_name": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(3) > strong",
+    "subject": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(5) > strong",
+    "course_number": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-right > ul > li:nth-child(5) > strong"
   }
 }
