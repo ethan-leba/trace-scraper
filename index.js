@@ -9,7 +9,7 @@ const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 async function run() {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: false
+    headless: true
   });
   const page = await browser.newPage();
 
@@ -37,7 +37,7 @@ async function run() {
     callback();
   }, 5);
 
-  (await getURLS(browser, page.url(), 5)).forEach(url => queue.push(url));
+  (await getURLS(browser, page.url(), 1)).forEach(url => queue.push(url));
 
   await queue.drain();
 
@@ -46,6 +46,10 @@ async function run() {
 }
 
 async function getURLS(browser, url, page_number) {
+  // checks if the class is a law or mls course
+  const unwanted_term = t => {
+    return (s => s.includes("mls") || s.includes("law"))(t.toLowerCase());
+  };
   const localPage = await browser.newPage();
   await localPage.goto(url);
   await localPage.waitForSelector("iframe");
@@ -61,8 +65,12 @@ async function getURLS(browser, url, page_number) {
 
   let urls = [];
   for (i = 0; i < table.length; i++) {
+    const term = await iframe.evaluate(
+      element => element.textContent,
+      (await table[i].$$("td"))[0]
+    );
     const link = await table[i].$("a");
-    if (link) {
+    if (link && !unwanted_term(term)) {
       urls.push(await iframe.evaluate(a => a.href, link));
     }
   }

@@ -28,5 +28,6 @@ public/
 
 # Screenshots folder
 screenshots/
-# My password!
-creds.js
+
+# VSCode config
+.vscode
