@@ -60,13 +60,22 @@ async function run() {
       urls.push(await iframe.evaluate(a => a.href, link));
     }
   }
-  console.log(urls);
-  await async.parallel(urls.map(url => callback => scrapePage(browser, url)));
+
+  let queue = async.queue(async (url, callback) => {
+    await scrapePage(browser, url);
+    callback();
+  }, 5);
+
+  urls.forEach(url => queue.push(url));
+
+  await queue.drain();
+  //  await async.parallel(urls.map(url => callback => scrapePage(browser, url)));
 
   await page.close();
   await browser.close();
 }
 
+// Scrapes the data from a single page in TRACE evals.
 async function scrapePage(browser, url) {
   const localPage = await browser.newPage();
   await localPage.goto(url);
@@ -77,8 +86,6 @@ async function scrapePage(browser, url) {
     "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(1)";
   await iframe.waitForSelector(sel);
   let data = {};
-  const element = await iframe.$(sel);
-  const text = await iframe.evaluate(element => element.textContent, element);
   data["instructor"] = await iframe.evaluate(
     element => element.textContent,
     await iframe.$(
@@ -104,18 +111,6 @@ async function scrapePage(browser, url) {
     )
   );
 
-  //   data["ic_score"] = await iframe.evaluate(
-  //     element => element.textContent,
-  //     await iframe.$x(
-  //       '//*[@id="bar_mean_2_1"]/div/div[1]/div/svg/g[2]/g[4]/g[12]/g/g/text[1]'
-  //     )[0]
-  //   );
-  //   data["ic_score_dept"] = await iframe.evaluate(
-  //     element => element.textContent,
-  //     await iframe.$x(
-  //       '//*[@id="bar_mean_2_1"]/div/div[1]/div/svg/g[2]/g[4]/g[24]/g/g/text[1]'
-  //     )[0]
-  //   );
   console.log(data);
   await localPage.close();
 }
