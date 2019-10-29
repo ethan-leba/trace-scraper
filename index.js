@@ -9,7 +9,7 @@ const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 async function run() {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: false
+    headless: true
   });
   const page = await browser.newPage();
 
@@ -48,7 +48,6 @@ async function run() {
   (await getURLS(browser, page.url())).forEach(url => queue.push(url));
 
   await queue.drain();
-  //  await async.parallel(urls.map(url => callback => scrapePage(browser, url)));
 
   await page.close();
   await browser.close();

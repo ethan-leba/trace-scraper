@@ -17,6 +17,8 @@ module.exports = {
         await iframe.$(selectors.trace[attr])
       );
     }
+
+    console.log(data);
     await localPage.close();
   }
 };
