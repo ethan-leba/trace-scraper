@@ -60,7 +60,7 @@ async function getURLS(browser, url, page_number) {
   }
   // waits for content inside of the row to appear
   await iframe.waitForSelector("td.ng-binding");
-  await localPage.waitFor(1000);
+  await iframe.waitFor(selectors.trace.table_indicator);
   const table = await iframe.$$("tbody tr");
 
   let urls = [];
