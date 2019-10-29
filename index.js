@@ -3,6 +3,9 @@ require("dotenv").config();
 const { Cluster } = require("puppeteer-cluster");
 const async = require("async");
 const page_handler = require("./page_handler");
+const fs = require("fs");
+
+const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 
 async function run() {
   console.log("Launching chromium...");
@@ -16,30 +19,24 @@ async function run() {
 
   // logins
   // login selectors
-  const USERNAME_SELECTOR = "#username";
-  const PASSWORD_SELECTOR = "#password";
-  const BUTTON_SELECTOR =
-    "body > section > div > div:nth-child(1) > div > form > div:nth-child(3) > button";
   console.log("Logging into myNEU...");
   // login logic
-  await page.click(USERNAME_SELECTOR);
+  await page.click(selectors.login.username);
   await page.keyboard.type(process.env.myNEU_username);
 
-  await page.click(PASSWORD_SELECTOR);
+  await page.click(selectors.login.password);
   await page.keyboard.type(process.env.myNEU_password);
 
-  await page.click(BUTTON_SELECTOR);
+  await page.click(selectors.login.button);
 
   await page.waitForNavigation();
 
   // get on to the trace website
-  await page.waitForSelector(
-    "#portlet_com_neu_events_display_portlet_EventsDisplayPortlet_INSTANCE_BL8mcIrWtJXq > div > div > div > div > div.container-header.mobile-collapse > a"
-  );
+  await page.waitForSelector(selectors.login.mainpage_indicator);
 
   console.log("Launching TRACE website...");
   await page.goto("https://www.applyweb.com/eval/shibboleth/neu/36892");
-  await page.waitForSelector("#navbar > ul > li:nth-child(3) > a");
+  await page.waitForSelector(selectors.login.trace_indicator);
   await page.goto("https://www.applyweb.com/eval/new/reportbrowser");
 
   // we can now scrape

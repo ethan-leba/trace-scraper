@@ -1,0 +1,9 @@
+{
+  "login": {
+    "username": "#username",
+    "password": "#password",
+    "button": "body > section > div > div:nth-child(1) > div > form > div:nth-child(3) > button",
+    "mainpage_indicator": "#portlet_com_neu_events_display_portlet_EventsDisplayPortlet_INSTANCE_BL8mcIrWtJXq > div > div > div > div > div.container-header.mobile-collapse > a",
+    "trace_indicator": "#navbar > ul > li:nth-child(3) > a"
+  }
+}
