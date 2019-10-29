@@ -1,4 +1,5 @@
 const fs = require("fs");
+const async = require("async");
 const trace_sel = JSON.parse(fs.readFileSync("selectors.json")).trace;
 
 module.exports = {
@@ -18,7 +19,17 @@ module.exports = {
       );
     }
 
+    await scrapePieChart(iframe);
     console.log(data);
     await localPage.close();
   }
 };
+
+// collects the data from the pie chart and processes it into an average
+async function scrapePieChart(frame) {
+  const pie_tooltips = await frame.$$(`${trace_sel.pie_chart} text`);
+  await async.map(pie_tooltips, async tooltip => {
+    const txt = await frame.evaluate(element => element.textContent, tooltip);
+    console.log(txt);
+  });
+}

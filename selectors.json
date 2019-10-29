@@ -13,6 +13,7 @@
       "subject": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(5) > strong",
       "course_number": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-right > ul > li:nth-child(5) > strong"
     },
+    "pie_chart": "#pie_3_9 > svg > g.p0_tooltips",
     "next_button": "#tapestryContainer > div > div:nth-child(1) > div.col-sm-12 > div > ul > li.pagination-next.ng-scope > a",
     "table_indicator": "#resultTable > tbody > tr:nth-child(15)"
   }
