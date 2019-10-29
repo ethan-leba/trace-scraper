@@ -1,5 +1,5 @@
 const fs = require("fs");
-const selectors = JSON.parse(fs.readFileSync("selectors.json"));
+const trace_sel = JSON.parse(fs.readFileSync("selectors.json")).trace;
 
 module.exports = {
   scrape: async function(browser, url) {
@@ -9,12 +9,12 @@ module.exports = {
     const iframe = await localPage.mainFrame().childFrames()[0];
     let data = {};
 
-    for (var attr in selectors.trace) {
+    for (var attr in trace_sel.text_fields) {
       // unsure if this is necessary
-      await iframe.waitForSelector(selectors.trace[attr]);
+      await iframe.waitForSelector(trace_sel.text_fields[attr]);
       data[attr] = await iframe.evaluate(
         element => element.textContent,
-        await iframe.$(selectors.trace[attr])
+        await iframe.$(trace_sel.text_fields[attr])
       );
     }
 

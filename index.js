@@ -9,17 +9,13 @@ const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 async function run() {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: true
+    headless: false
   });
   const page = await browser.newPage();
 
-  console.log("Opening portal to myNEU...");
-
-  await page.goto("http://my.northeastern.edu/c/portal/login");
+  console.log("Launching TRACE website...");
+  await page.goto("https://www.applyweb.com/eval/shibboleth/neu/36892");
   await page.waitForSelector(selectors.login.button);
-
-  console.log("Logging into myNEU...");
-
   await page.click(selectors.login.username);
   await page.keyboard.type(process.env.myNEU_username);
 
@@ -30,10 +26,6 @@ async function run() {
 
   await page.waitForNavigation();
 
-  await page.waitForSelector(selectors.login.mainpage_indicator);
-
-  console.log("Launching TRACE website...");
-  await page.goto("https://www.applyweb.com/eval/shibboleth/neu/36892");
   await page.waitForSelector(selectors.login.trace_indicator);
   await page.goto("https://www.applyweb.com/eval/new/reportbrowser");
 
@@ -45,7 +37,7 @@ async function run() {
     callback();
   }, 5);
 
-  (await getURLS(browser, page.url())).forEach(url => queue.push(url));
+  (await getURLS(browser, page.url(), 5)).forEach(url => queue.push(url));
 
   await queue.drain();
 
@@ -53,11 +45,15 @@ async function run() {
   await browser.close();
 }
 
-async function getURLS(browser, url) {
+async function getURLS(browser, url, page_number) {
   const localPage = await browser.newPage();
   await localPage.goto(url);
   await localPage.waitForSelector("iframe");
   const iframe = localPage.mainFrame().childFrames()[0];
+  await iframe.waitForSelector("td.ng-binding");
+  for (var i = 1; i < page_number; i++) {
+    await iframe.click(selectors.trace.next_button);
+  }
   // waits for content inside of the row to appear
   await iframe.waitForSelector("td.ng-binding");
   await localPage.waitFor(1000);
