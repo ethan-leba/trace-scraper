@@ -19,7 +19,7 @@ module.exports = {
       );
     }
 
-    await scrapePieChart(iframe);
+    console.log(await scrapePieChart(iframe));
     console.log(data);
     await localPage.close();
   }
@@ -27,9 +27,20 @@ module.exports = {
 
 // collects the data from the pie chart and processes it into an average
 async function scrapePieChart(frame) {
+  const tooltip_to_num = tooltip => {
+    const numbers = tooltip
+      .replace(/\D+/g, " ")
+      .split(" ")
+      .map(x => parseInt(x));
+    return (((numbers[0] + numbers[1]) / 2) * numbers[3]) / 100;
+  };
   const pie_tooltips = await frame.$$(`${trace_sel.pie_chart} text`);
+  // calculating the average
+  // the amount of entries
+  let sum = 0;
   await async.map(pie_tooltips, async tooltip => {
     const txt = await frame.evaluate(element => element.textContent, tooltip);
-    console.log(txt);
+    sum += tooltip_to_num(txt);
   });
+  return sum;
 }
