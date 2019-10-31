@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 require("dotenv").config();
-const { Cluster } = require("puppeteer-cluster");
+const _cliProgress = require("cli-progress");
 const async = require("async");
 const page_handler = require("./page_handler");
 const fs = require("fs");
@@ -32,6 +32,8 @@ async function run() {
   console.log("Collecting links on page 1");
   // pull out the table from the page
 
+  // create a new progress bar instance and use shades_classic theme
+
   let queue = async.queue(async (url, callback) => {
     await page_handler.scrape(browser, url);
     callback();
@@ -39,16 +41,23 @@ async function run() {
 
   let urls = [];
 
+  const bar1 = new _cliProgress.SingleBar(
+    {},
+    _cliProgress.Presets.shades_classic
+  );
+
   let url_queue = async.queue(async (page_no, callback) => {
     const result = await getURLS(browser, page.url(), page_no);
-    //    result.forEach(url => queue.push(url));
     urls = [...urls, ...result];
+    bar1.increment();
     callback();
   }, 5);
 
-  [...Array(5).keys()].forEach(page => url_queue.push(page));
+  [...Array(10).keys()].forEach(page => url_queue.push(page));
 
+  bar1.start(10, 0);
   await url_queue.drain();
+  bar1.stop();
 
   urls.forEach(page => queue.push(page));
   await queue.drain();
