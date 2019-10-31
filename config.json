@@ -1,0 +1,5 @@
+{
+  "no_page_workers": 5,
+  "no_class_workers": 5,
+  "no_pages": 20
+}

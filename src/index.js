@@ -1,16 +1,24 @@
 const puppeteer = require("puppeteer");
-require("dotenv").config();
 const _cliProgress = require("cli-progress");
 const async = require("async");
 const page_handler = require("./page_handler");
 const fs = require("fs");
+
 const selectors = JSON.parse(fs.readFileSync("selectors.json"));
+const config = JSON.parse(fs.readFileSync("config.json"));
+require("dotenv").config();
 
 async function run() {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: false
+    headless: true
   });
+
+  // Loading bar setup
+  const bar = new _cliProgress.SingleBar(
+    {},
+    _cliProgress.Presets.shades_classic
+  );
   const page = await browser.newPage();
 
   console.log("Launching TRACE website...");
@@ -29,38 +37,40 @@ async function run() {
   await page.waitForSelector(selectors.login.trace_indicator);
   await page.goto("https://www.applyweb.com/eval/new/reportbrowser");
 
-  console.log("Collecting links on page 1");
+  console.log("Collecting links for individual classes...");
   // pull out the table from the page
 
   // create a new progress bar instance and use shades_classic theme
 
-  let queue = async.queue(async (url, callback) => {
+  let class_queue = async.queue(async (url, callback) => {
     await page_handler.scrape(browser, url);
+    bar.increment();
     callback();
-  }, 5);
+  }, config.no_class_workers);
 
+  // The URLs for each individual class page
   let urls = [];
 
-  const bar1 = new _cliProgress.SingleBar(
-    {},
-    _cliProgress.Presets.shades_classic
-  );
-
-  let url_queue = async.queue(async (page_no, callback) => {
+  let page_queue = async.queue(async (page_no, callback) => {
     const result = await getURLS(browser, page.url(), page_no);
     urls = [...urls, ...result];
-    bar1.increment();
+    bar.increment();
     callback();
-  }, 5);
+  }, config.no_page_workers);
 
-  [...Array(10).keys()].forEach(page => url_queue.push(page));
+  [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
 
-  bar1.start(10, 0);
-  await url_queue.drain();
-  bar1.stop();
+  bar.start(config.no_pages, 0);
+  // Collect all the class page URLS
+  await page_queue.drain();
+  bar.stop();
 
-  urls.forEach(page => queue.push(page));
-  await queue.drain();
+  urls.forEach(page => class_queue.push(page));
+
+  bar.start(urls.length, 0);
+  // Collect all the data from each class page
+  await class_queue.drain();
+  bar.stop();
 
   await page.close();
   await browser.close();
