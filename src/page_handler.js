@@ -19,7 +19,7 @@ module.exports = {
       );
     }
 
-    data["avg_hrs_per_week"] = await scrapePieChart(iframe);
+    data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toString();
     console.log(data);
     await localPage.close();
   }
