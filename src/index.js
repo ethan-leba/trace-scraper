@@ -41,13 +41,16 @@ async function run() {
 
   let url_queue = async.queue(async (page_no, callback) => {
     const result = await getURLS(browser, page.url(), page_no);
-    result.forEach(url => queue.push(url));
+    //    result.forEach(url => queue.push(url));
+    urls = [...urls, ...result];
     callback();
   }, 5);
 
   [...Array(5).keys()].forEach(page => url_queue.push(page));
 
   await url_queue.drain();
+
+  urls.forEach(page => queue.push(page));
   await queue.drain();
 
   await page.close();
