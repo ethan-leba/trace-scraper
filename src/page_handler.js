@@ -10,6 +10,15 @@ module.exports = {
     const iframe = await localPage.mainFrame().childFrames()[0];
     let data = {};
 
+    //TODO: async?
+    const buttons = trace_sel.table_buttons;
+    for (var i = 0; i < buttons.length; i++) {
+      await iframe.waitForSelector(buttons[i]);
+      await iframe.click(buttons[i]);
+    }
+
+    await localPage.waitFor(3000);
+
     for (var attr in trace_sel.text_fields) {
       // unsure if this is necessary
     }
