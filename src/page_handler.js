@@ -12,18 +12,29 @@ module.exports = {
 
     for (var attr in trace_sel.text_fields) {
       // unsure if this is necessary
-      await iframe.waitForSelector(trace_sel.text_fields[attr]);
-      data[attr] = await iframe.evaluate(
-        element => element.textContent,
-        await iframe.$(trace_sel.text_fields[attr])
-      );
     }
 
     data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toString();
-    console.log(data);
+    //console.log(data);
     await localPage.close();
   }
 };
+
+// Extracts the text of a selector
+async function getField(sel) {
+  await iframe.waitForSelector(sel);
+  data[attr] = await iframe.evaluate(
+    element => element.textContent,
+    await iframe.$(sel)
+  );
+}
+
+// Gets the value of two text fields and returns the difference
+async function getDifference(sel_A, sel_B) {
+  return (
+    (await getField(sel_A)).parseInt() - (await getField(sel_B)).parseInt()
+  );
+}
 
 // collects the data from the pie chart and processes it into an average
 async function scrapePieChart(frame) {
