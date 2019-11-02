@@ -10,38 +10,32 @@ module.exports = {
     const iframe = await localPage.mainFrame().childFrames()[0];
     let data = {};
 
-    //TODO: async?
-    const buttons = trace_sel.table_buttons;
-    for (var i = 0; i < buttons.length; i++) {
-      await iframe.waitForSelector(buttons[i]);
-      await iframe.click(buttons[i]);
-    }
-
     await localPage.waitFor(3000);
 
     for (var attr in trace_sel.text_fields) {
-      // unsure if this is necessary
+      data[attr] = await getField(iframe, trace_sel.text_fields[attr]);
     }
 
     data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toString();
-    //console.log(data);
+    console.log(data);
     await localPage.close();
   }
 };
 
 // Extracts the text of a selector
-async function getField(sel) {
-  await iframe.waitForSelector(sel);
-  data[attr] = await iframe.evaluate(
+async function getField(frame, sel) {
+  await frame.waitForSelector(sel);
+  return await frame.evaluate(
     element => element.textContent,
-    await iframe.$(sel)
+    await frame.$(sel)
   );
 }
 
 // Gets the value of two text fields and returns the difference
-async function getDifference(sel_A, sel_B) {
+async function getDifference(frame, sel_A, sel_B) {
   return (
-    (await getField(sel_A)).parseInt() - (await getField(sel_B)).parseInt()
+    (await getField(frame, sel_A)).parseInt() -
+    (await getField(frame, sel_B)).parseInt()
   );
 }
 
