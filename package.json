@@ -15,5 +15,8 @@
     "dotenv": "^8.2.0",
     "puppeteer": "^2.0.0",
     "puppeteer-cluster": "^0.17.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.6.0"
   }
 }
