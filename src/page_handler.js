@@ -12,16 +12,22 @@ module.exports = {
 
     await localPage.waitFor(3000);
 
+    // text fields not requiring processing
     for (var attr in trace_sel.text_fields) {
       data[attr] = await getField(iframe, trace_sel.text_fields[attr]);
     }
 
+    // special cases
+    data["is_summer"] = isSummer(await getField(iframe, trace_sel.class_title));
     data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toString();
     console.log(data);
     await localPage.close();
   }
 };
 
+const isSummer = title => {
+  return title.toLowerCase().includes("summer");
+};
 // Extracts the text of a selector
 async function getField(frame, sel) {
   await frame.waitForSelector(sel);
