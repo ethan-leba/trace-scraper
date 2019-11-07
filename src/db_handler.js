@@ -16,13 +16,16 @@ module.exports = {
     () => {
       data;
     };
-    connection.query("SELECT 1 + 1 AS solution", function(error, results) {
+    const course_query = mysql.format(
+      "INSERT IGNORE INTO course (name, shortname) VALUES (?, ? ?)",
+      [data.course_name, data.subject, data.course_number]
+    );
+    // const professor_query = "";
+    // const entry_query = "";
+
+    connection.query(course_query, function(error, results) {
       if (error) throw error;
-      console.log("The solution is: ", results[0].solution);
+      console.log(results);
     });
   }
 };
-
-//connection.connect();
-
-//connection.end();
