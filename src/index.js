@@ -2,6 +2,7 @@ const puppeteer = require("puppeteer");
 const _cliProgress = require("cli-progress");
 const async = require("async");
 const page_handler = require("./page_handler");
+const db_handler = require("./db_handler");
 const fs = require("fs");
 
 const selectors = JSON.parse(fs.readFileSync("selectors.json"));
@@ -11,8 +12,11 @@ require("dotenv").config();
 async function run() {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: true
+    headless: false
   });
+  // DB connection
+  const connection = db_handler.init();
+  connection.connect();
 
   // Loading bar setup
   const bar = new _cliProgress.SingleBar(
@@ -25,9 +29,11 @@ async function run() {
   await page.goto("https://www.applyweb.com/eval/shibboleth/neu/36892");
   await page.waitForSelector(selectors.login.button);
   await page.click(selectors.login.username);
+  // eslint-disable-next-line no-undef
   await page.keyboard.type(process.env.myNEU_username);
 
   await page.click(selectors.login.password);
+  // eslint-disable-next-line no-undef
   await page.keyboard.type(process.env.myNEU_password);
 
   await page.click(selectors.login.button);
@@ -43,7 +49,7 @@ async function run() {
   // create a new progress bar instance and use shades_classic theme
 
   let class_queue = async.queue(async (url, callback) => {
-    await page_handler.scrape(browser, url);
+    db_handler.insert(connection, await page_handler.scrape(browser, url));
     bar.increment();
     callback();
   }, config.no_class_workers);
@@ -67,11 +73,11 @@ async function run() {
 
   urls.forEach(page => class_queue.push(page));
 
-  bar.start(urls.length, 0);
   // Collect all the data from each class page
   await class_queue.drain();
   bar.stop();
 
+  connection.end();
   await page.close();
   await browser.close();
 }

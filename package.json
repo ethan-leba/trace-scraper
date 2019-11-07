@@ -13,6 +13,7 @@
     "async": "^3.1.0",
     "cli-progress": "^3.3.1",
     "dotenv": "^8.2.0",
+    "mysql": "github:mysqljs/mysql",
     "puppeteer": "^2.0.0",
     "puppeteer-cluster": "^0.17.0"
   },

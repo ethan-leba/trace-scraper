@@ -20,8 +20,9 @@ module.exports = {
     // special cases
     data["is_summer"] = isSummer(await getField(iframe, trace_sel.class_title));
     data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toString();
-    console.log(data);
+    //    console.log(data);
     await localPage.close();
+    return data;
   }
 };
 
@@ -38,12 +39,12 @@ async function getField(frame, sel) {
 }
 
 // Gets the value of two text fields and returns the difference
-async function getDifference(frame, sel_A, sel_B) {
-  return (
-    (await getField(frame, sel_A)).parseInt() -
-    (await getField(frame, sel_B)).parseInt()
-  );
-}
+// async function getDifference(frame, sel_A, sel_B) {
+//   return (
+//     (await getField(frame, sel_A)).parseInt() -
+//     (await getField(frame, sel_B)).parseInt()
+//   );
+// }
 
 // collects the data from the pie chart and processes it into an average
 async function scrapePieChart(frame) {
