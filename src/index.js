@@ -1,22 +1,31 @@
 const puppeteer = require("puppeteer");
+const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const _cliProgress = require("cli-progress");
 const async = require("async");
 const page_handler = require("./page_handler");
-const db_handler = require("./db_handler");
 const fs = require("fs");
 
 const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 const config = JSON.parse(fs.readFileSync("config.json"));
 require("dotenv").config();
 
+const csvWriter = createCsvWriter({
+  path: "out.csv",
+  header: [
+    { id: "instructor", title: "instructor" },
+    { id: "course_name", title: "course_name" },
+    { id: "subject", title: "subject" },
+    { id: "course_number", title: "course_number" },
+    { id: "instructor_effectiveness", title: "i_effectiveness" },
+    { id: "avg_hrs_per_week", title: "avg_hrs_per_week" }
+  ]
+});
+
 async function run() {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: false
+    headless: true
   });
-  // DB connection
-  const connection = db_handler.init();
-  connection.connect();
 
   // Loading bar setup
   const bar = new _cliProgress.SingleBar(
@@ -47,9 +56,9 @@ async function run() {
   // pull out the table from the page
 
   // create a new progress bar instance and use shades_classic theme
-
+  let rows = [];
   let class_queue = async.queue(async (url, callback) => {
-    db_handler.insert(connection, await page_handler.scrape(browser, url));
+    rows.push(await page_handler.scrape(browser, url));
     bar.increment();
     callback();
   }, config.no_class_workers);
@@ -73,11 +82,13 @@ async function run() {
 
   urls.forEach(page => class_queue.push(page));
 
+  bar.start(urls.length, 0);
   // Collect all the data from each class page
   await class_queue.drain();
   bar.stop();
 
-  connection.end();
+  await csvWriter.writeRecords(rows);
+
   await page.close();
   await browser.close();
 }
