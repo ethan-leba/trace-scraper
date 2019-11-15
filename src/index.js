@@ -16,7 +16,8 @@ const csvWriter = createCsvWriter({
     { id: "course_name", title: "course_name" },
     { id: "subject", title: "subject" },
     { id: "course_number", title: "course_number" },
-    { id: "instructor_effectiveness", title: "i_effectiveness" },
+    { id: "i_effectiveness", title: "i_effectiveness" },
+    { id: "d_effectiveness", title: "d_effectiveness" },
     { id: "avg_hrs_per_week", title: "avg_hrs_per_week" }
   ]
 });
@@ -58,8 +59,8 @@ async function run() {
   // create a new progress bar instance and use shades_classic theme
   let rows = [];
   let class_queue = async.queue(async (url, callback) => {
-    rows.push(await page_handler.scrape(browser, url));
     bar.increment();
+    rows.push(await page_handler.scrape(browser, url));
     callback();
   }, config.no_class_workers);
 
@@ -67,9 +68,9 @@ async function run() {
   let urls = [];
 
   let page_queue = async.queue(async (page_no, callback) => {
+    bar.increment();
     const result = await getURLS(browser, page.url(), page_no);
     urls = [...urls, ...result];
-    bar.increment();
     callback();
   }, config.no_page_workers);
 

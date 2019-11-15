@@ -14,12 +14,9 @@
       "#btn_table_2_3",
       "#btn_table_2_22"
     ],
-    "relative_values": {
-      "instructor_effectiveness": [
-        "#bar_mean_cat_1 > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(5) > g:nth-child(1) > g > g > text:nth-child(1)"
-      ]
-    },
     "text_fields": {
+      "i_effectiveness": "#bar_mean_cat_1 > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(5) > g:nth-child(3) > g > g > text:nth-child(1)",
+      "d_effectiveness": "#bar_mean_cat_1 > div > div:nth-child(1) > div > svg > g:nth-child(4) > g:nth-child(5) > g:nth-child(8) > g > g > text:nth-child(1)",
       "instructor": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(1) > strong",
       "course_name": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(3) > strong",
       "subject": "#tapestryContainer > div.container-fluid > div.row > div > div > div.col-xs-6.text-left > ul > li:nth-child(5) > strong",
