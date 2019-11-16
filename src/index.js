@@ -1,5 +1,5 @@
 const puppeteer = require("puppeteer");
-const createCsvWriter = require("csv-writer").createObjectCsvWriter;
+// const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const _cliProgress = require("cli-progress");
 const async = require("async");
 const page_handler = require("./page_handler");
@@ -9,18 +9,18 @@ const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 const config = JSON.parse(fs.readFileSync("config.json"));
 require("dotenv").config();
 
-const csvWriter = createCsvWriter({
-  path: "out.csv",
-  header: [
-    { id: "instructor", title: "instructor" },
-    { id: "course_name", title: "course_name" },
-    { id: "subject", title: "subject" },
-    { id: "course_number", title: "course_number" },
-    { id: "i_effectiveness", title: "i_effectiveness" },
-    { id: "d_effectiveness", title: "d_effectiveness" },
-    { id: "avg_hrs_per_week", title: "avg_hrs_per_week" }
-  ]
-});
+// const csvWriter = createCsvWriter({
+//   path: "out.csv",
+//   header: [
+//     { id: "instructor", title: "instructor" },
+//     { id: "course_name", title: "course_name" },
+//     { id: "subject", title: "subject" },
+//     { id: "course_number", title: "course_number" },
+//     { id: "i_effectiveness", title: "i_effectiveness" },
+//     { id: "d_effectiveness", title: "d_effectiveness" },
+//     { id: "avg_hrs_per_week", title: "avg_hrs_per_week" }
+//   ]
+// });
 
 async function run() {
   console.log("Launching chromium...");
@@ -56,16 +56,11 @@ async function run() {
   console.log("Collecting links for individual classes...");
   // pull out the table from the page
 
-  // create a new progress bar instance and use shades_classic theme
-  let rows = [];
-  let class_queue = async.queue(async (url, callback) => {
-    bar.increment();
-    rows.push(await page_handler.scrape(browser, url));
-    callback();
-  }, config.no_class_workers);
-
   // The URLs for each individual class page
   let urls = [];
+
+  // The stream that the program will write to
+  let stream = fs.createWriteStream("out.csv");
 
   let page_queue = async.queue(async (page_no, callback) => {
     bar.increment();
@@ -73,6 +68,14 @@ async function run() {
     urls = [...urls, ...result];
     callback();
   }, config.no_page_workers);
+
+  let class_queue = async.queue(async (url, callback) => {
+    bar.increment();
+    // stream.write("this is a stream.");
+    stream.write(Object.values(await page_handler.scrape(browser, url)).join());
+    stream.write("\n");
+    callback();
+  }, config.no_class_workers);
 
   [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
 
@@ -88,7 +91,8 @@ async function run() {
   await class_queue.drain();
   bar.stop();
 
-  await csvWriter.writeRecords(rows);
+  //  await csvWriter.writeRecords(rows);
+  stream.end();
 
   await page.close();
   await browser.close();
