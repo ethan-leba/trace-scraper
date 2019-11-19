@@ -32,3 +32,5 @@ screenshots/
 
 # VSCode config
 .vscode
+dave.txt
+config.json
