@@ -9,18 +9,9 @@ const selectors = JSON.parse(fs.readFileSync("selectors.json"));
 const config = JSON.parse(fs.readFileSync("config.json"));
 require("dotenv").config();
 
-// const csvWriter = createCsvWriter({
-//   path: "out.csv",
-//   header: [
-//     { id: "instructor", title: "instructor" },
-//     { id: "course_name", title: "course_name" },
-//     { id: "subject", title: "subject" },
-//     { id: "course_number", title: "course_number" },
-//     { id: "i_effectiveness", title: "i_effectiveness" },
-//     { id: "d_effectiveness", title: "d_effectiveness" },
-//     { id: "avg_hrs_per_week", title: "avg_hrs_per_week" }
-//   ]
-// });
+const debug = require("debug")("scraper:main");
+const debug_url = require("debug")("scraper:url");
+const debug_page = require("debug")("scraper:page");
 
 async function run() {
   console.log("Launching chromium...");
@@ -62,12 +53,16 @@ async function run() {
   // The stream that the program will write to
   let stream = fs.createWriteStream("out.csv");
 
-  let page_queue = async.queue(async (page_no, callback) => {
+  let page_queue = async.queue(async page_no => {
     bar.increment();
     const result = await getURLS(browser, page.url(), page_no);
-    urls = [...urls, ...result];
-    callback();
+    urls.push(...result);
   }, config.no_page_workers);
+
+  page_queue.error((err, task) => {
+    debug_url(`Page ${task} experienced an error!`);
+    debug_url(err);
+  });
 
   let class_queue = async.queue(async (url, callback) => {
     bar.increment();
@@ -79,17 +74,19 @@ async function run() {
 
   [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
 
-  bar.start(config.no_pages, 0);
+  // bar.start(config.no_pages, 0);
   // Collect all the class page URLS
   await page_queue.drain();
-  bar.stop();
+  //bar.stop();
 
+  //console.log(urls);
+  debug(`Pushing ${urls.length} class pages into the queue`);
   urls.forEach(page => class_queue.push(page));
 
-  bar.start(urls.length, 0);
+  // bar.start(urls.length, 0);
   // Collect all the data from each class page
   await class_queue.drain();
-  bar.stop();
+  // bar.stop();
 
   //  await csvWriter.writeRecords(rows);
   stream.end();
@@ -99,7 +96,9 @@ async function run() {
 }
 
 async function getURLS(browser, url, page_number) {
+  const timeout_length = 5 * 60 * 1000;
   // checks if the class is a law or mls course
+  debug_url(`Getting URLS from page: ${page_number}`);
   const unwanted_term = t => {
     return (s => s.includes("mls") || s.includes("law"))(t.toLowerCase());
   };
@@ -107,14 +106,15 @@ async function getURLS(browser, url, page_number) {
   await localPage.goto(url);
   await localPage.waitForSelector("iframe");
   const iframe = localPage.mainFrame().childFrames()[0];
-  await iframe.waitForSelector("td.ng-binding");
+  await iframe.waitForSelector("td.ng-binding", { timeout: timeout_length });
   for (var i = 1; i < page_number; i++) {
     await iframe.click(selectors.trace.next_button);
   }
   // waits for content inside of the row to appear
-  await iframe.waitForSelector("td.ng-binding");
+  await iframe.waitForSelector("td.ng-binding", { timeout: timeout_length });
   await iframe.waitFor(selectors.trace.table_indicator);
   const table = await iframe.$$("tbody tr");
+  debug_url(`Table is of length ${table.length} on page: ${page_number}`);
 
   let urls = [];
   for (i = 0; i < table.length; i++) {
@@ -127,6 +127,7 @@ async function getURLS(browser, url, page_number) {
       urls.push(await iframe.evaluate(a => a.href, link));
     }
   }
+  debug_url(`${urls.length} URLS found from page: ${page_number}`);
 
   await localPage.close();
   return urls;
