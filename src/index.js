@@ -11,7 +11,7 @@ require("dotenv").config();
 
 const debug = require("debug")("scraper:main");
 const debug_url = require("debug")("scraper:url");
-const debug_page = require("debug")("scraper:page");
+//const debug_class = require("debug")("scraper:page");
 
 async function run() {
   console.log("Launching chromium...");
@@ -55,7 +55,11 @@ async function run() {
 
   let page_queue = async.queue(async page_no => {
     bar.increment();
-    const result = await getURLS(browser, page.url(), page_no);
+    let result;
+    await async.retry(3, async () => {
+      debug_url(`Trying to get page ${page_no}`);
+      result = await getURLS(browser, page.url(), page_no);
+    });
     urls.push(...result);
   }, config.no_page_workers);
 
@@ -64,12 +68,15 @@ async function run() {
     debug_url(err);
   });
 
-  let class_queue = async.queue(async (url, callback) => {
+  let class_queue = async.queue(async url => {
     bar.increment();
     // stream.write("this is a stream.");
-    stream.write(Object.values(await page_handler.scrape(browser, url)).join());
+    let result;
+    await async.retry(3, async () => {
+      result = await page_handler.scrape(browser, url);
+    });
+    stream.write(Object.values(result).join());
     stream.write("\n");
-    callback();
   }, config.no_class_workers);
 
   [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
@@ -98,7 +105,6 @@ async function run() {
 async function getURLS(browser, url, page_number) {
   const timeout_length = 5 * 60 * 1000;
   // checks if the class is a law or mls course
-  debug_url(`Getting URLS from page: ${page_number}`);
   const unwanted_term = t => {
     return (s => s.includes("mls") || s.includes("law"))(t.toLowerCase());
   };
@@ -114,7 +120,6 @@ async function getURLS(browser, url, page_number) {
   await iframe.waitForSelector("td.ng-binding", { timeout: timeout_length });
   await iframe.waitFor(selectors.trace.table_indicator);
   const table = await iframe.$$("tbody tr");
-  debug_url(`Table is of length ${table.length} on page: ${page_number}`);
 
   let urls = [];
   for (i = 0; i < table.length; i++) {
