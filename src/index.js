@@ -68,12 +68,6 @@ async function run() {
     debug_url(err);
   });
 
-  // Converts from "Last, First" to "First Last"
-  let format_name = name => {
-    const name_array = name.split(", ");
-    return name_array[1] + " " + name_array[0];
-  };
-
   let class_queue = async.queue(async url => {
     bar.increment();
     // stream.write("this is a stream.");
@@ -81,7 +75,7 @@ async function run() {
     await async.retry(3, async () => {
       result = await page_handler.scrape(browser, url);
     });
-    result["name"] = format_name(result["name"]);
+    result = formatForCSV(result);
     stream.write(Object.values(result).join());
     stream.write("\n");
   }, config.no_class_workers);
@@ -108,6 +102,24 @@ async function run() {
 
   await page.close();
   await browser.close();
+}
+
+function formatForCSV(data) {
+  // Converts from "Last, First" to "First Last"
+  let format_name = name => {
+    const name_array = name.split(", ");
+    return name_array[1] + " " + name_array[0];
+  };
+
+  // Escapes a string for CSV usage.
+  let escape_string = str => {
+    `"${str}"`;
+  };
+
+  data["name"] = format_name("name");
+  data["course_name"] = escape_string(data["course_name"]);
+
+  return data;
 }
 
 async function getURLS(browser, url, page_number) {
