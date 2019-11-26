@@ -68,6 +68,12 @@ async function run() {
     debug_url(err);
   });
 
+  // Converts from "Last, First" to "First Last"
+  let format_name = name => {
+    const name_array = name.split(", ");
+    return name_array[1] + " " + name_array[0];
+  };
+
   let class_queue = async.queue(async url => {
     bar.increment();
     // stream.write("this is a stream.");
@@ -75,6 +81,7 @@ async function run() {
     await async.retry(3, async () => {
       result = await page_handler.scrape(browser, url);
     });
+    result["name"] = format_name(result["name"]);
     stream.write(Object.values(result).join());
     stream.write("\n");
   }, config.no_class_workers);
@@ -92,6 +99,7 @@ async function run() {
 
   // bar.start(urls.length, 0);
   // Collect all the data from each class page
+  stream.write(config.csv_columns.join() + "\n");
   await class_queue.drain();
   // bar.stop();
 

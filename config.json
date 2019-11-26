@@ -1,5 +1,18 @@
 {
   "no_page_workers": 5,
   "no_class_workers": 5,
-  "no_pages": 1
+  "no_pages": 5,
+  "csv_columns": [
+    "instructor_effectiveness",
+    "dept_effectiveness",
+    "name",
+    "course_name",
+    "subject",
+    "course_num",
+    "enrollment",
+    "responses_w_declines",
+    "declines",
+    "is_summer",
+    "hours_per_week"
+  ]
 }
