@@ -93,7 +93,15 @@ async function run() {
 
   // bar.start(urls.length, 0);
   // Collect all the data from each class page
-  stream.write(config.csv_columns.join() + "\n");
+
+  // Write the CSV column headers
+  stream.write(
+    [
+      ...Object.keys(selectors.trace.text_fields),
+      ...config.extra_csv_columns
+    ].join() + "\n"
+  );
+
   await class_queue.drain();
   // bar.stop();
 
@@ -112,11 +120,10 @@ function formatForCSV(data) {
   };
 
   // Escapes a string for CSV usage.
-  let escape_string = str => {
-    `"${str}"`;
-  };
+  let escape_string = str => `"${str}"`;
 
-  data["name"] = format_name("name");
+  // Applying the formatting
+  data["name"] = format_name(data["name"]);
   data["course_name"] = escape_string(data["course_name"]);
 
   return data;
