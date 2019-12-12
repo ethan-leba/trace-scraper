@@ -19,7 +19,7 @@ module.exports = {
 
     // special cases
     data["is_summer"] = isSummer(await getField(iframe, trace_sel.class_title));
-    data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toString();
+    data["avg_hrs_per_week"] = (await scrapePieChart(iframe)).toFixed(3);
     //    console.log(data);
     await localPage.close();
     return data;
