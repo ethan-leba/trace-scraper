@@ -1,7 +1,5 @@
 const puppeteer = require("puppeteer");
-const _cliProgress = require("cli-progress");
 const async = require("async");
-const page_handler = require("./page_handler");
 const fs = require("fs");
 
 const selectors = JSON.parse(fs.readFileSync("selectors.json"));
@@ -12,10 +10,15 @@ const debug = require("debug")("scraper:main");
 const debug_url = require("debug")("scraper:url");
 //const debug_class = require("debug")("scraper:page");
 
-async function run() {
+const page_handler = require("./page_handler");
+const rabbit = require("./rabbit_transmitter");
+
+// Runs the scraper.
+// Takes in a function that class data is sent to on retrieval.
+async function run(transmit) {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: true
+    headless: !process.argv.includes("-v")
   });
 
   const page = await browser.newPage();
@@ -44,9 +47,6 @@ async function run() {
   // The URLs for each individual class page
   let urls = [];
 
-  // The stream that the program will write to
-  let stream = fs.createWriteStream("out.csv");
-
   let page_queue = async.queue(async page_no => {
     let result;
     await async.retry(3, async () => {
@@ -66,9 +66,7 @@ async function run() {
     await async.retry(3, async () => {
       result = await page_handler.scrape(browser, url);
     });
-    result = formatForCSV(result);
-    stream.write(Object.values(result).join());
-    stream.write("\n");
+    transmit(result);
   }, config.no_class_workers);
 
   [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
@@ -79,37 +77,10 @@ async function run() {
   debug(`Pushing ${urls.length} class pages into the queue`);
   urls.forEach(page => class_queue.push(page));
 
-  // Write the CSV column headers
-  stream.write(
-    [
-      ...Object.keys(selectors.trace.text_fields),
-      ...config.extra_csv_columns
-    ].join() + "\n"
-  );
-
   await class_queue.drain();
-
-  stream.end();
 
   await page.close();
   await browser.close();
-}
-
-function formatForCSV(data) {
-  // Converts from "Last, First" to "First Last"
-  let format_name = name => {
-    const name_array = name.split(", ");
-    return name_array[1] + " " + name_array[0];
-  };
-
-  // Escapes a string for CSV usage.
-  let escape_string = str => `"${str}"`;
-
-  // Applying the formatting
-  data["name"] = format_name(data["name"]);
-  data["course_name"] = escape_string(data["course_name"]);
-
-  return data;
 }
 
 async function getURLS(browser, url, page_number) {
@@ -148,4 +119,6 @@ async function getURLS(browser, url, page_number) {
   return urls;
 }
 
-run();
+if (require.main === module) {
+  rabbit.runRabbitScraper(run);
+}
