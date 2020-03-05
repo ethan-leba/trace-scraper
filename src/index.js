@@ -1,5 +1,4 @@
 const puppeteer = require("puppeteer");
-// const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const _cliProgress = require("cli-progress");
 const async = require("async");
 const page_handler = require("./page_handler");
@@ -19,11 +18,6 @@ async function run() {
     headless: true
   });
 
-  // Loading bar setup
-  const bar = new _cliProgress.SingleBar(
-    {},
-    _cliProgress.Presets.shades_classic
-  );
   const page = await browser.newPage();
 
   console.log("Launching TRACE website...");
@@ -54,7 +48,6 @@ async function run() {
   let stream = fs.createWriteStream("out.csv");
 
   let page_queue = async.queue(async page_no => {
-    bar.increment();
     let result;
     await async.retry(3, async () => {
       debug_url(`Trying to get page ${page_no}`);
@@ -69,8 +62,6 @@ async function run() {
   });
 
   let class_queue = async.queue(async url => {
-    bar.increment();
-    // stream.write("this is a stream.");
     let result;
     await async.retry(3, async () => {
       result = await page_handler.scrape(browser, url);
@@ -82,17 +73,11 @@ async function run() {
 
   [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
 
-  // bar.start(config.no_pages, 0);
   // Collect all the class page URLS
   await page_queue.drain();
-  //bar.stop();
 
-  //console.log(urls);
   debug(`Pushing ${urls.length} class pages into the queue`);
   urls.forEach(page => class_queue.push(page));
-
-  // bar.start(urls.length, 0);
-  // Collect all the data from each class page
 
   // Write the CSV column headers
   stream.write(
@@ -103,9 +88,7 @@ async function run() {
   );
 
   await class_queue.drain();
-  // bar.stop();
 
-  //  await csvWriter.writeRecords(rows);
   stream.end();
 
   await page.close();
