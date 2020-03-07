@@ -23,6 +23,12 @@ async function wrapRabbit(scraper) {
   //TODO:  (when `false`) that you should wait for the event `'drain'`
   // to fire before writing again. We're just doing the one write,
   // so we'll ignore it.
+  console.log("seend");
+  console.log("seend");
+  console.log("seend");
+  ch.sendToQueue(q, Buffer.from("plz b gentle"));
+  console.log("send");
+
   const transmit = get_transmit_fn(ch, q);
   await scraper(transmit);
   await commit();
@@ -39,7 +45,8 @@ function get_transmit_fn(channel, queue) {
   // Sends the entry over RabbitMQ
   return async (data) => {
       console.log("Sending data: " + JSON.stringify(data));
-      await channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)));
+      channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)));
+      console.log("Data sent.");
   };
 }
 

@@ -8,30 +8,25 @@ module.exports = {
 // Returns the messages that have been sent to the Q
 async function consumeMessages() {
   result = [];
-  amqp.connect('amqp://localhost').then(function(conn) {
-    return conn.createChannel().then(function(ch) {
-      var q = 'test_queue';
+    amqp.connect('amqp://localhost').then(function(conn) {
+      process.once('SIGINT', function() { conn.close(); });
+      return conn.createChannel().then(function(ch) {
 
-      var ok = ch.assertQueue(q);
-      console.log("Consumer: Connected to queue");
+        var q = 'test_queue';
+        var ok = ch.assertQueue(q);
 
-      return ok.then(function(_qok) {
-        // NB: `sentToQueue` and `publish` both return a boolean
-        // indicating whether it's OK to send again straight away, or
-        //TODO:  (when `false`) that you should wait for the event `'drain'`
-        // to fire before writing again. We're just doing the one write,
-        // so we'll ignore it.
-        return ch.consume(q, function(msg) {
-              if (msg !== null) {
-                console.log(msg.content.toString());
-                ch.ack(msg);
-                result += msg;
-              }
-            });
+        ok = ok.then(function(_qok) {
+          return ch.consume(q, function(msg) {
+            console.log(" [x] Received '%s'", msg.content.toString());
+          }, {noAck: true});
+        });
+
+        return ok.then(function(_consumeOk) {
+          console.log(' [*] Waiting for messages. To exit press CTRL+C');
+        });
       });
-    }).finally(function() { conn.close(); });
-  }).catch(console.warn);
-  return result;
+    }).catch(console.warn);
+  // return result;
 }
 
 //let testData =
