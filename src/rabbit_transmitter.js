@@ -1,19 +1,20 @@
 var amqp = require('amqplib');
 
-function wrapRabbit(func) {
+async function wrapRabbit(func) {
   amqp.connect('amqp://localhost').then(function(conn) {
     return conn.createChannel().then(function(ch) {
       var q = 'hello';
-  
+
       var ok = ch.assertQueue(q, {durable: false});
-  
+
       return ok.then(function(_qok) {
         // NB: `sentToQueue` and `publish` both return a boolean
         // indicating whether it's OK to send again straight away, or
-        // (when `false`) that you should wait for the event `'drain'`
+        //TODO:  (when `false`) that you should wait for the event `'drain'`
         // to fire before writing again. We're just doing the one write,
         // so we'll ignore it.
-		func(ch);
+		func(transmit(ch, q));
+        commit();
         // ch.sendToQueue(q, Buffer.from(msg));
         return ch.close();
       });
@@ -26,10 +27,11 @@ function commit() {
   // Notifies the receiver that the scraper has completed
 }
 
-function transmit(data) {
+function transmit(channel, queue) {
   // Sends the entry over RabbitMQ
-
-  return data;
+  return (data) => {
+      channel.sendToQueue(queue, JSON.stringify(data));
+  };
 }
 
 

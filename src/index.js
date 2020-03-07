@@ -13,7 +13,9 @@ const debug_url = require("debug")("scraper:url");
 const page_handler = require("./page_handler");
 const rabbit = require("./rabbit_transmitter");
 
-async function run() {
+// Runs the scraper.
+// Takes in a function that class data is sent to on retrieval.
+async function run(transmit) {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
     headless: !(process.argv.includes("-v"))
@@ -65,8 +67,7 @@ async function run() {
     await async.retry(3, async () => {
       result = await page_handler.scrape(browser, url);
     });
-    
-
+    transmit(result);
   }, config.no_class_workers);
 
   [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
