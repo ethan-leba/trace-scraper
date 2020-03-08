@@ -5,27 +5,24 @@ module.exports = {
 }
 
 async function wrapRabbit(scraper) {
-    amqp.connect('amqp://localhost').then(function(conn) {
-      return conn.createChannel().then(function(ch) {
-        var q = 'test_queue';
+    let conn = await amqp.connect('amqp://localhost');
+    let ch = await conn.createChannel();
+    var q = 'test_queue';
 
-        var ok = ch.assertQueue(q);
-
-        return ok.then(function(_qok) {
-          // NB: `sentToQueue` and `publish` both return a boolean
-          // indicating whether it's OK to send again straight away, or
-          // (when `false`) that you should wait for the event `'drain'`
-          // to fire before writing again. We're just doing the one write,
-          // so we'll ignore it.
-          const transmit = (msg) => {
-              ch.sendToQueue(q, Buffer.from(msg));
-              console.log(" [x] Sent '%s'", msg);
-          }
-          scraper(transmit);
-          return ch.close();
-        });
-      }).finally(function() { conn.close(); });
-    }).catch(console.warn);
+    await ch.assertQueue(q).then(function(_qok) {
+        // NB: `sentToQueue` and `publish` both return a boolean
+        // indicating whether it's OK to send again straight away, or
+        // (when `false`) that you should wait for the event `'drain'`
+        // to fire before writing again. We're just doing the one write,
+        // so we'll ignore it.
+        const transmit = (msg) => {
+          ch.sendToQueue(q, Buffer.from(msg));
+          console.log(" [x] Sent '%s'", msg);
+        }
+        scraper(transmit);
+        return ch.close();
+    });
+    conn.close();
 }
 
 async function commit() {

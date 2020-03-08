@@ -17,12 +17,10 @@ var rabbit = require('../src/rabbit_transmitter');
 
 describe('RabbitMQ', function() {
   describe('#wrapRabbit()', function() {
-    it('will send the data without malformation', async function() {
+    it('can send and receive data properly', async function() {
       const testData = "hey, this is steve. call me back!";
       await rabbit.wrapRabbit(test_utils.mockScraper(testData));
       let result = await test_utils.consumeMessages();
-      console.log(result);
-      console.log(new Array(10).fill(testData));
       assert.deepStrictEqual(result, new Array(10).fill(testData));
     }).timeout(5000);
   });
