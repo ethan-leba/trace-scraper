@@ -5,36 +5,27 @@ module.exports = {
 }
 
 async function wrapRabbit(scraper) {
-  let connection = await amqp.connect('amqp://localhost').catch((err) => {
-    console.log(`Failed to assert queue: ${err}`);
-  });
-  console.log("Connected to AMQP");
-  let ch = await connection.createChannel();
-  console.log("Connected to channel");
-  let q = 'test_queue';
+    amqp.connect('amqp://localhost').then(function(conn) {
+      return conn.createChannel().then(function(ch) {
+        var q = 'test_queue';
 
-  await ch.assertQueue(q).catch((err) => {
-    console.log(`Failed to assert queue: ${err}`);
-  });
-  console.log("Transmitter: Connected to queue");
+        var ok = ch.assertQueue(q);
 
-  // NB: `sentToQueue` and `publish` both return a boolean
-  // indicating whether it's OK to send again straight away, or
-  //TODO:  (when `false`) that you should wait for the event `'drain'`
-  // to fire before writing again. We're just doing the one write,
-  // so we'll ignore it.
-  console.log("seend");
-  console.log("seend");
-  console.log("seend");
-  ch.sendToQueue(q, Buffer.from("plz b gentle"));
-  console.log("send");
-
-  const transmit = get_transmit_fn(ch, q);
-  await scraper(transmit);
-  await commit();
-        // ch.sendToQueue(q, Buffer.from(msg));
-  // await ch.close();
-  await connection.close()
+        return ok.then(function(_qok) {
+          // NB: `sentToQueue` and `publish` both return a boolean
+          // indicating whether it's OK to send again straight away, or
+          // (when `false`) that you should wait for the event `'drain'`
+          // to fire before writing again. We're just doing the one write,
+          // so we'll ignore it.
+          const transmit = (msg) => {
+              ch.sendToQueue(q, Buffer.from(msg));
+              console.log(" [x] Sent '%s'", msg);
+          }
+          scraper(transmit);
+          return ch.close();
+        });
+      }).finally(function() { conn.close(); });
+    }).catch(console.warn);
 }
 
 async function commit() {
