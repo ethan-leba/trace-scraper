@@ -119,4 +119,6 @@ async function getURLS(browser, url, page_number) {
   return urls;
 }
 
-run();
+if (require.main === module) {
+  rabbit.runRabbitScraper(run);
+}

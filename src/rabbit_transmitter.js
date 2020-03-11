@@ -1,15 +1,17 @@
 var amqp = require("amqplib");
 
 module.exports = {
-  wrapRabbit: wrapRabbit
+  wrapRabbit: wrapRabbit,
+  runRabbitScraper: runRabbitScraper
 };
 
-async function wrapRabbit(scraper) {
+// Wraps a function with a RabbitMQ connection, allowing it to transmit messages
+async function wrapRabbit(func) {
   let conn = await amqp.connect("amqp://localhost");
   let ch = await conn.createChannel();
   var q = "test_queue";
 
-  await ch.assertQueue(q).then(function(_qok) {
+  await ch.assertQueue(q).then(async _qok => {
     // NB: `sentToQueue` and `publish` both return a boolean
     // indicating whether it's OK to send again straight away, or
     // (when `false`) that you should wait for the event `'drain'`
@@ -19,23 +21,23 @@ async function wrapRabbit(scraper) {
       ch.sendToQueue(q, Buffer.from(msg));
       console.log(" [x] Sent '%s'", msg);
     };
-    scraper(transmit);
+    await func(transmit);
     return ch.close();
   });
   conn.close();
 }
 
-async function commit() {
-  // Notifies the receiver that the scraper has completed
-}
-
-function get_transmit_fn(channel, queue) {
-  // Sends the entry over RabbitMQ
-  return async data => {
-    console.log("Sending data: " + JSON.stringify(data));
-    channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)));
-    console.log("Data sent.");
-  };
+// Runs the scraper and transmits the information to Rabbit
+async function runRabbitScraper(scraper) {
+  wrapRabbit(async transmit => {
+    const transmitJSON = json => {
+      transmit(JSON.stringify(json));
+    };
+    await scraper(entry => {
+      transmitJSON({ command: "add", args: entry });
+    });
+    transmitJSON({ command: "commit", args: {} });
+  });
 }
 
 function formatJSON(data) {
