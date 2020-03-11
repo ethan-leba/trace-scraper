@@ -18,7 +18,7 @@ const rabbit = require("./rabbit_transmitter");
 async function run(transmit) {
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: !(process.argv.includes("-v"))
+    headless: !process.argv.includes("-v")
   });
 
   const page = await browser.newPage();
@@ -46,7 +46,6 @@ async function run(transmit) {
 
   // The URLs for each individual class page
   let urls = [];
-
 
   let page_queue = async.queue(async page_no => {
     let result;
