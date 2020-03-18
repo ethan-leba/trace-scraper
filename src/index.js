@@ -22,7 +22,8 @@ async function run(transmit) {
   }
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: !env.debug
+    headless: !env.debug,
+    args: ['--no-sandbox']
   });
 
   const page = await browser.newPage();
