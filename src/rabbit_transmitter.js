@@ -1,4 +1,5 @@
 var amqp = require("amqplib");
+const env = require("./config").get_env()
 
 module.exports = {
   wrapRabbit: wrapRabbit,
@@ -7,9 +8,9 @@ module.exports = {
 
 // Wraps a function with a RabbitMQ connection, allowing it to transmit messages
 async function wrapRabbit(func) {
-  let conn = await amqp.connect("amqp://localhost");
+  let conn = await amqp.connect(env.rabbit_uri);
   let ch = await conn.createChannel();
-  var q = "test_queue";
+  var q = env.rabbit_queue;
 
   await ch.assertQueue(q).then(async _qok => {
     // NB: `sentToQueue` and `publish` both return a boolean

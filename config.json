@@ -1,6 +1,0 @@
-{
-  "no_page_workers": 5,
-  "no_class_workers": 5,
-  "no_pages": 3,
-  "extra_csv_columns": ["is_summer", "hours_per_week"]
-}

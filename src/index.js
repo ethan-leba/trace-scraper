@@ -2,9 +2,8 @@ const puppeteer = require("puppeteer");
 const async = require("async");
 const fs = require("fs");
 
+const env = require("./config").get_env()
 const selectors = JSON.parse(fs.readFileSync("selectors.json"));
-const config = JSON.parse(fs.readFileSync("config.json"));
-require("dotenv").config();
 
 const debug = require("debug")("scraper:main");
 const debug_url = require("debug")("scraper:url");
@@ -16,9 +15,14 @@ const rabbit = require("./rabbit_transmitter");
 // Runs the scraper.
 // Takes in a function that class data is sent to on retrieval.
 async function run(transmit) {
+  if(env.verbose) {
+    console.log("-- Configuration --");
+    console.log(Object.entries(env).map(([k, v]) => `${k}: ${v}`).join('\n'));
+    console.log('\n');
+  }
   console.log("Launching chromium...");
   const browser = await puppeteer.launch({
-    headless: !process.argv.includes("-v")
+    headless: !env.debug
   });
 
   const page = await browser.newPage();
@@ -28,14 +32,15 @@ async function run(transmit) {
   await page.waitForSelector(selectors.login.button);
   await page.click(selectors.login.username);
   // eslint-disable-next-line no-undef
-  await page.keyboard.type(process.env.myNEU_username);
+  await page.keyboard.type(env.myNEU_username);
 
   await page.click(selectors.login.password);
   // eslint-disable-next-line no-undef
-  await page.keyboard.type(process.env.myNEU_password);
+  await page.keyboard.type(env.myNEU_password);
 
   await page.click(selectors.login.button);
 
+  console.log("--- AWAITING TWO FACTOR ---");
   await page.waitForNavigation();
 
   await page.waitForSelector(selectors.login.trace_indicator);
@@ -54,7 +59,7 @@ async function run(transmit) {
       result = await getURLS(browser, page.url(), page_no);
     });
     urls.push(...result);
-  }, config.no_page_workers);
+  }, env.no_page_workers);
 
   page_queue.error((err, task) => {
     debug_url(`Page ${task} experienced an error!`);
@@ -67,9 +72,9 @@ async function run(transmit) {
       result = await page_handler.scrape(browser, url);
     });
     transmit(result);
-  }, config.no_class_workers);
+  }, env.no_class_workers);
 
-  [...Array(config.no_pages).keys()].forEach(page => page_queue.push(page));
+  [...Array(env.no_pages).keys()].forEach(page => page_queue.push(page));
 
   // Collect all the class page URLS
   await page_queue.drain();
