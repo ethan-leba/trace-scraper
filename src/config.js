@@ -19,7 +19,7 @@ function get_env() {
       no_class_workers: process.env.NO_CLASS_WORKERS || 5,
       myNEU_username: process.env.MYNEU_USERNAME,
       myNEU_password: process.env.MYNEU_PASSWORD,
-      rabbit_uri: process.env.RABBIT_URI || "amqp://localhost",
+      rabbit_uri: process.env.CLOUDAMQP_URL || process.env.RABBIT_URI || "amqp://localhost",
       rabbit_queue: process.env.RABBIT_QUEUE || "development_queue",
       verbose: process.argv.includes("-v"),
       debug: process.argv.includes("-d"),
