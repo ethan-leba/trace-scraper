@@ -23,7 +23,7 @@ function get_env() {
       rabbit_queue: process.env.RABBIT_QUEUE || "development_queue",
       verbose: process.argv.includes("-v"),
       debug: process.argv.includes("-d"),
-      no_pages: process.argv[2]
+      no_pages: parseInt(process.argv[2])
     }
     return checkMissing(env);
 }

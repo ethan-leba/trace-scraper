@@ -55,7 +55,7 @@ async function run(transmit) {
 
   let page_queue = async.queue(async page_no => {
     let result;
-    await async.retry(3, async () => {
+    await async.retry(5, async () => {
       debug_url(`Trying to get page ${page_no}`);
       result = await getURLS(browser, page.url(), page_no);
     });
@@ -69,7 +69,7 @@ async function run(transmit) {
 
   let class_queue = async.queue(async url => {
     let result;
-    await async.retry(3, async () => {
+    await async.retry(5, async () => {
       result = await page_handler.scrape(browser, url);
     });
     transmit(result);
@@ -90,14 +90,14 @@ async function run(transmit) {
 }
 
 async function getURLS(browser, url, page_number) {
-  const timeout_length = 5 * 60 * 1000;
+  const timeout_length = 10 * 1000;
   // checks if the class is a law or mls course
   const unwanted_term = t => {
     return (s => s.includes("mls") || s.includes("law"))(t.toLowerCase());
   };
   const localPage = await browser.newPage();
   await localPage.goto(url);
-  await localPage.waitForSelector("iframe");
+  await localPage.waitForSelector("iframe", { timeout: timeout_length });
   const iframe = localPage.mainFrame().childFrames()[0];
   await iframe.waitForSelector("td.ng-binding", { timeout: timeout_length });
   for (var i = 1; i < page_number; i++) {
